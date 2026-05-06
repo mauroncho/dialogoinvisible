@@ -1,8 +1,86 @@
-html, body {
-  margin: 0;
-  padding: 0;
+html,
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
 }
 
 canvas {
-  display: block;
+	display: block;
+}
+
+/* ---- Serial log overlay ---- */
+
+#serial-log {
+	position: fixed;
+	bottom: 28px;
+	left: 28px;
+	z-index: 10;
+
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	pointer-events: none; /* no bloquea clics al canvas */
+}
+
+#serial-log .log-entry {
+	font-family: "Doto", sans-serif;
+	font-weight: 400;
+	font-size: 20px;
+	letter-spacing: 0.06em;
+
+	color: rgba(255, 255, 255, 0.7);
+
+	white-space: nowrap;
+
+	/* animación de entrada */
+	/* animation: log-in 0.5s ease-out forwards; */
+}
+
+/* las entradas más viejas (arriba) se ven más tenues */
+/* #serial-log .log-entry:nth-last-child(1) {
+	color: rgba(255, 255, 255, 0.85);
+}
+#serial-log .log-entry:nth-last-child(2) {
+	color: rgba(255, 255, 255, 0.65);
+}
+#serial-log .log-entry:nth-last-child(3) {
+	color: rgba(255, 255, 255, 0.5);
+}
+#serial-log .log-entry:nth-last-child(4) {
+	color: rgba(255, 255, 255, 0.38);
+}
+#serial-log .log-entry:nth-last-child(5) {
+	color: rgba(255, 255, 255, 0.26);
+}
+#serial-log .log-entry:nth-last-child(6) {
+	color: rgba(255, 255, 255, 0.16);
+} */
+
+/* animación de fade-out al eliminar */
+#serial-log .log-entry.removing {
+	animation: log-out 0.2s ease-in forwards;
+}
+
+@keyframes log-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes log-out {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
 }
