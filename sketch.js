@@ -1,20 +1,25 @@
 // 🎛️ Parámetros interactivos
 const params = {
 	// Visuales
-	distConexion: 130,
+	distConexion: 160,
 	probConexion: 0.015,
 	velGlobal: 1.0,
 	tamanoBase: 1.0,
-	opacidadLineas: 1.0,
+	opacidadLineas: 3.0,
 	brilloParticulas: 1.0,
 	// Sonoras
-	volDrone: 1.0,
-	volMedia: 1.0,
-	volGrave: 1.0,
+	volDrone: 0.7,
+	volMedia: 0.6,
+	volGrave: 0.7,
 };
 
 // Sliders de p5
-let sDistConexion, sProbConexion, sVelGlobal, sTamanoBase, sOpacidadLineas, sBrilloParticulas;
+let sDistConexion,
+	sProbConexion,
+	sVelGlobal,
+	sTamanoBase,
+	sOpacidadLineas,
+	sBrilloParticulas;
 let sVolDrone, sVolMedia, sVolGrave;
 
 const entidades = [];
@@ -45,63 +50,87 @@ let ultimoPulso = 0;
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 
-	serialLogEl = document.getElementById('serial-log');
+	serialLogEl = document.getElementById("serial-log");
 
 	// Configurar GUI con p5
 	const guiDiv = createDiv();
 	guiDiv.position(10, 10);
-	guiDiv.style('background', 'rgba(0,0,0,0.5)');
-	guiDiv.style('padding', '10px');
-	guiDiv.style('color', 'white');
-	guiDiv.style('font-family', 'sans-serif');
-	guiDiv.style('font-size', '12px');
-	guiDiv.style('display', 'flex');
-	guiDiv.style('flex-direction', 'column');
-	guiDiv.style('gap', '5px');
-	guiDiv.style('z-index', '100');
+	guiDiv.style("background", "rgba(0,0,0,0.5)");
+	guiDiv.style("padding", "10px");
+	guiDiv.style("color", "white");
+	guiDiv.style("font-family", "sans-serif");
+	guiDiv.style("font-size", "12px");
+	guiDiv.style("display", "flex");
+	guiDiv.style("flex-direction", "column");
+	guiDiv.style("gap", "5px");
+	guiDiv.style("z-index", "100");
 
 	function crearControl(nombre, min, max, val, step) {
 		const contenedor = createDiv();
-		contenedor.style('display', 'flex');
-		contenedor.style('justify-content', 'space-between');
-		contenedor.style('align-items', 'center');
-		contenedor.style('width', '260px');
-		
+		contenedor.style("display", "flex");
+		contenedor.style("justify-content", "space-between");
+		contenedor.style("align-items", "center");
+		contenedor.style("width", "260px");
+
 		const etiqueta = createSpan(nombre);
-		etiqueta.style('width', '100px');
-		
+		etiqueta.style("width", "100px");
+
 		const slider = createSlider(min, max, val, step);
-		slider.style('width', '100px');
-		
+		slider.style("width", "100px");
+
 		const valor = createSpan(val.toString());
-		valor.style('width', '35px');
-		valor.style('text-align', 'right');
-		
+		valor.style("width", "35px");
+		valor.style("text-align", "right");
+
 		// Actualizar el texto cuando se mueve el slider
 		slider.input(() => {
 			valor.html(slider.value());
 		});
-		
+
 		contenedor.child(etiqueta);
 		contenedor.child(slider);
 		contenedor.child(valor);
 		guiDiv.child(contenedor);
-		
+
 		return slider;
 	}
 
-	createDiv('<b>Visuales</b>').parent(guiDiv);
-	sDistConexion = crearControl('Dist. Conexión', 50, 300, 130, 1);
-	sProbConexion = crearControl('Prob. Conexión', 0.001, 0.1, 0.015, 0.001);
-	sVelGlobal = crearControl('Velocidad Gral', 0.1, 3.0, 1.0, 0.1);
-	sTamanoBase = crearControl('Tamaño Part.', 0.1, 3.0, 1.0, 0.1);
-	sOpacidadLineas = crearControl('Opacidad Líneas', 0.0, 3.0, 1.0, 0.1);
-	sBrilloParticulas = crearControl('Brillo Part.', 0.1, 3.0, 1.0, 0.1);
+	createDiv("<b>Visuales</b>").parent(guiDiv);
+	sDistConexion = crearControl(
+		"Dist. Conexión",
+		50,
+		300,
+		params.distConexion,
+		1,
+	);
+	sProbConexion = crearControl(
+		"Prob. Conexión",
+		0.001,
+		0.1,
+		params.probConexion,
+		0.001,
+	);
+	sVelGlobal = crearControl("Velocidad Gral", 0.1, 3.0, params.velGlobal, 0.1);
+	sTamanoBase = crearControl("Tamaño Part.", 0.1, 3.0, params.tamanoBase, 0.1);
+	sOpacidadLineas = crearControl(
+		"Opacidad Líneas",
+		0.0,
+		5.0,
+		params.opacidadLineas,
+		0.1,
+	);
+	sBrilloParticulas = crearControl(
+		"Brillo Part.",
+		0.1,
+		3.0,
+		params.brilloParticulas,
+		0.1,
+	);
 
-	createDiv('<br><b>Sonido (Multipl.)</b>').parent(guiDiv);
-	sVolDrone = crearControl('Vol. Drone', 0, 3, 1.0, 0.1);
-	sVolMedia = crearControl('Vol. Media', 0, 3, 1.0, 0.1);
-	sVolGrave = crearControl('Vol. Grave', 0, 3, 1.0, 0.1);
+	createDiv("<br><b>Sonido (Multipl.)</b>").parent(guiDiv);
+	sVolDrone = crearControl("Vol. Drone", 0, 3, params.volDrone, 0.1);
+	sVolMedia = crearControl("Vol. Media", 0, 3, params.volMedia, 0.1);
+	sVolGrave = crearControl("Vol. Grave", 0, 3, params.volGrave, 0.1);
 
 	reverb = new p5.Reverb();
 
@@ -128,7 +157,7 @@ function draw() {
 	params.tamanoBase = sTamanoBase.value();
 	params.opacidadLineas = sOpacidadLineas.value();
 	params.brilloParticulas = sBrilloParticulas.value();
-	
+
 	params.volDrone = sVolDrone.value();
 	params.volMedia = sVolMedia.value();
 	params.volGrave = sVolGrave.value();
@@ -152,8 +181,8 @@ function draw() {
 
 				// Usar el RSSI para modular la vida de la entidad
 				const rssi = int(partes[2].trim());
-				const ssid = partes.length >= 4 ? partes[3].trim() : '';
-				const mac  = partes[1].trim();
+				const ssid = partes.length >= 4 ? partes[3].trim() : "";
+				const mac = partes[1].trim();
 
 				const nuevaEntidad = new Entidad(x, y, rssi);
 				entidades.push(nuevaEntidad);
@@ -192,6 +221,15 @@ function draw() {
 
 	// ---------------- CONEXIONES ----------------
 
+	// 1. Limpieza y decaimiento de conexiones antiguas
+	for (let i = conexiones.length - 1; i >= 0; i--) {
+		conexiones[i].vida -= 0.015; // Se desvanecen gradualmente (~1 segundo)
+		if (conexiones[i].vida <= 0.02) {
+			conexiones.splice(i, 1);
+		}
+	}
+
+	// 2. Generación de nuevas conexiones
 	for (let i = 0; i < entidades.length; i++) {
 		for (let j = i + 1; j < entidades.length; j++) {
 			const a = entidades[i];
@@ -469,8 +507,10 @@ class Entidad {
 
 		const brillo = constrain(this.energia, 0, 1);
 
-		const alpha = map(brillo, 0, 1, 60, 200) * this.opacidad * params.brilloParticulas;
-		const tamNucleo = this.tam * map(brillo, 0, 1, 0.6, 1.5) * params.tamanoBase;
+		const alpha =
+			map(brillo, 0, 1, 60, 200) * this.opacidad * params.brilloParticulas;
+		const tamNucleo =
+			this.tam * map(brillo, 0, 1, 0.6, 1.5) * params.tamanoBase;
 
 		fill(255, alpha);
 		ellipse(this.x, this.y, tamNucleo);
@@ -485,12 +525,17 @@ class Conexion {
 		this.b = b;
 		this.distancia = d;
 		this.seed = random(1000);
+		this.vida = 1.0; // Ciclo de vida para desvanecerse
 	}
 
 	dibujar() {
 		noFill();
 
-		const alpha = map(this.distancia, 0, params.distConexion, 80, 15) * params.opacidadLineas;
+		// Actualizar la distancia por si las entidades se movieron
+		this.distancia = dist(this.a.x, this.a.y, this.b.x, this.b.y);
+
+		const alphaBase = map(this.distancia, 0, params.distConexion, 80, 15);
+		const alpha = alphaBase * params.opacidadLineas * this.vida;
 		stroke(255, alpha);
 		strokeWeight(0.8);
 
@@ -527,28 +572,32 @@ function logSerialData(mac, rssi, ssid) {
 
 	// Armar el texto a mostrar
 	let texto = `${mac}  ${rssi}dBm`;
-	if (ssid && ssid !== 'BROADCAST') {
+	if (ssid && ssid !== "BROADCAST") {
 		texto += `  ${ssid}`;
 	}
 
 	// Crear el elemento
-	const entry = document.createElement('div');
-	entry.className = 'log-entry';
+	const entry = document.createElement("div");
+	entry.className = "log-entry";
 	entry.textContent = texto;
 
 	// Agregar al final (el más nuevo abajo)
 	serialLogEl.appendChild(entry);
 
 	// Si hay más de LOG_MAX, eliminar el más viejo con animación
-	const activeLogs = serialLogEl.querySelectorAll('.log-entry:not(.removing)');
+	const activeLogs = serialLogEl.querySelectorAll(".log-entry:not(.removing)");
 	if (activeLogs.length > LOG_MAX) {
 		const diff = activeLogs.length - LOG_MAX;
 		for (let i = 0; i < diff; i++) {
 			const oldest = activeLogs[i];
-			oldest.classList.add('removing');
-			oldest.addEventListener('animationend', () => oldest.remove(), { once: true });
+			oldest.classList.add("removing");
+			oldest.addEventListener("animationend", () => oldest.remove(), {
+				once: true,
+			});
 			// Fallback por si la animación no se dispara
-			setTimeout(() => { if (oldest.parentNode) oldest.remove(); }, 500);
+			setTimeout(() => {
+				if (oldest.parentNode) oldest.remove();
+			}, 500);
 		}
 	}
 }
