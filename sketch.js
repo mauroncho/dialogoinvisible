@@ -7,6 +7,7 @@ const params = {
 	tamanoBase: 1.0,
 	opacidadLineas: 3.0,
 	brilloParticulas: 1.0,
+	maxRostros: 5,
 	// Sonoras
 	volDrone: 0.7,
 	volMedia: 0.6,
@@ -19,11 +20,18 @@ let sDistConexion,
 	sVelGlobal,
 	sTamanoBase,
 	sOpacidadLineas,
-	sBrilloParticulas;
+	sBrilloParticulas,
+	sMaxRostros;
 let sVolDrone, sVolMedia, sVolGrave;
 
 const entidades = [];
 const conexiones = [];
+
+let video;
+let faceMesh;
+let rostros = [];
+let conexionesRostros = [];
+let lastCaptureTime = 0;
 
 let reverb;
 let port; // Puerto serial
@@ -126,6 +134,13 @@ function setup() {
 		params.brilloParticulas,
 		0.1,
 	);
+	sMaxRostros = crearControl(
+		"Máx. Rostros",
+		0,
+		15,
+		params.maxRostros,
+		1,
+	);
 
 	createDiv("<br><b>Sonido (Multipl.)</b>").parent(guiDiv);
 	sVolDrone = crearControl("Vol. Drone", 0, 3, params.volDrone, 0.1);
@@ -147,6 +162,34 @@ function setup() {
 	iniciarCapa();
 	iniciarCapaGrave();
 	iniciarPulso();
+
+	// Configuración de Video y ml5.js
+	video = createCapture(VIDEO);
+	video.size(640, 480);
+	video.hide();
+	faceMesh = ml5.faceMesh(video, { maxFaces: 1 });
+	faceMesh.detectStart(video, gotFaces);
+}
+
+function gotFaces(results) {
+	if (results.length > 0 && rostros.length < params.maxRostros) {
+		const ahora = millis();
+		if (ahora - lastCaptureTime > 3000) {
+			let recorte;
+			if (results[0].box) {
+				const box = results[0].box;
+				let x = constrain(box.xMin, 0, video.width);
+				let y = constrain(box.yMin, 0, video.height);
+				let w = constrain(box.width, 1, video.width - x);
+				let h = constrain(box.height, 1, video.height - y);
+				recorte = video.get(x, y, w, h);
+			} else {
+				recorte = video.get();
+			}
+			rostros.push(new Rostro(recorte));
+			lastCaptureTime = ahora;
+		}
+	}
 }
 
 function draw() {
@@ -157,6 +200,7 @@ function draw() {
 	params.tamanoBase = sTamanoBase.value();
 	params.opacidadLineas = sOpacidadLineas.value();
 	params.brilloParticulas = sBrilloParticulas.value();
+	params.maxRostros = sMaxRostros.value();
 
 	params.volDrone = sVolDrone.value();
 	params.volMedia = sVolMedia.value();
@@ -196,10 +240,32 @@ function draw() {
 		}
 	}
 
-	// ---------------- ENTIDADES ----------------
-
+	// ---------------- ROSTROS Y CONEXIONES (OPCIÓN A) ----------------
+	
 	const ahora = millis();
 	const FADE_DURACION = 3000; // últimos 3 segundos se desvanece
+
+	for (let i = rostros.length - 1; i >= 0; i--) {
+		let r = rostros[i];
+		// 10 minutos = 10 * 60 * 1000 ms
+		if (ahora - r.timestamp > 10 * 60 * 1000) {
+			rostros.splice(i, 1);
+		} else {
+			r.dibujar();
+		}
+	}
+
+	for (let i = conexionesRostros.length - 1; i >= 0; i--) {
+		let c = conexionesRostros[i];
+		c.actualizar();
+		if (c.energia <= 0 || !rostros.includes(c.r1) || !rostros.includes(c.r2)) {
+			conexionesRostros.splice(i, 1);
+		} else {
+			c.dibujar();
+		}
+	}
+
+	// ---------------- ENTIDADES ----------------
 
 	// Eliminar entidades expiradas
 	for (let i = entidades.length - 1; i >= 0; i--) {
@@ -472,6 +538,7 @@ class Entidad {
 		// RSSI modula la vida: señal fuerte (-30) = vida corta, señal débil (-100) = vida larga
 		this.rssi = constrain(rssi, -100, -30);
 		this.vidaTotal = map(this.rssi, -100, -30, 20000, 8000); // 8s a 20s
+		this.ultimoRostro = null;
 	}
 
 	mover() {
@@ -487,6 +554,51 @@ class Entidad {
 
 		this.vx *= 0.98;
 		this.vy *= 0.98;
+
+		// Atracción hacia rostros y polinización (Opción A)
+		let closestRostro = null;
+		let minDist = Infinity;
+		for (let r of rostros) {
+			let d = dist(this.x, this.y, r.x, r.y);
+			if (d < minDist) {
+				minDist = d;
+				closestRostro = r;
+			}
+		}
+
+		if (closestRostro) {
+			// Gravedad suave
+			let forceX = closestRostro.x - this.x;
+			let forceY = closestRostro.y - this.y;
+			let distToCenter = sqrt(forceX * forceX + forceY * forceY);
+			if (distToCenter > 0) {
+				forceX /= distToCenter;
+				forceY /= distToCenter;
+			}
+			this.vx += forceX * 0.005;
+			this.vy += forceY * 0.005;
+
+			// Lógica de Polinización
+			if (minDist < params.distConexion) {
+				if (this.ultimoRostro !== closestRostro) {
+					if (this.ultimoRostro != null) {
+						let found = false;
+						for (let c of conexionesRostros) {
+							if ((c.r1 === this.ultimoRostro && c.r2 === closestRostro) ||
+								(c.r2 === this.ultimoRostro && c.r1 === closestRostro)) {
+								c.energia = min(c.energia + 1.0, 5.0);
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							conexionesRostros.push(new ConexionRostros(this.ultimoRostro, closestRostro));
+						}
+					}
+					this.ultimoRostro = closestRostro;
+				}
+			}
+		}
 
 		this.x += this.vx * this.velBase * params.velGlobal;
 		this.y += this.vy * this.velBase * params.velGlobal;
