@@ -56,6 +56,11 @@ let pulsoEnv;
 let energiaPulso = 0;
 let ultimoPulso = 0;
 
+function preload() {
+	// Cargar el modelo antes de que arranque la aplicación
+	faceMesh = ml5.faceMesh({ maxFaces: 1 });
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 
@@ -168,7 +173,8 @@ function setup() {
 	video = createCapture(VIDEO);
 	video.size(640, 480);
 	video.hide();
-	faceMesh = ml5.faceMesh(video, { maxFaces: 1 });
+	
+	// El modelo ya se cargó en preload, solo iniciamos la detección
 	faceMesh.detectStart(video, gotFaces);
 }
 
