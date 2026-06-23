@@ -28,6 +28,7 @@ const entidades = [];
 const conexiones = [];
 
 let video;
+let debugMode = true;
 let faceMesh;
 let rostros = [];
 let conexionesRostros = [];
@@ -172,22 +173,26 @@ function setup() {
 }
 
 function gotFaces(results) {
+	console.log("Detección ml5:", results); // Registro para inspección en Consola
 	if (results.length > 0 && rostros.length < params.maxRostros) {
 		const ahora = millis();
 		if (ahora - lastCaptureTime > 3000) {
 			let recorte;
 			if (results[0].box) {
 				const box = results[0].box;
+				console.log("Caja del rostro detectado:", box);
 				let x = constrain(box.xMin, 0, video.width);
 				let y = constrain(box.yMin, 0, video.height);
 				let w = constrain(box.width, 1, video.width - x);
 				let h = constrain(box.height, 1, video.height - y);
 				recorte = video.get(x, y, w, h);
 			} else {
+				console.log("Rostro detectado pero sin 'box'. Capturando frame completo.");
 				recorte = video.get();
 			}
 			rostros.push(new Rostro(recorte));
 			lastCaptureTime = ahora;
+			console.log("Rostro guardado. Cantidad actual:", rostros.length);
 		}
 	}
 }
@@ -351,6 +356,19 @@ function draw() {
 	densidad = constrain(densidad, 0, 1);
 
 	actualizarCampo(densidad);
+
+	// Dibujar miniatura de depuración de la webcam
+	if (debugMode && video) {
+		push();
+		stroke(255);
+		strokeWeight(2);
+		image(video, width - 170, 10, 160, 120);
+		fill(255);
+		noStroke();
+		textSize(10);
+		text("DEBUG CAM", width - 165, 25);
+		pop();
+	}
 }
 
 // ---------------- DRONE ----------------
