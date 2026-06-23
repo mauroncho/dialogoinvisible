@@ -8,6 +8,7 @@ const params = {
 	opacidadLineas: 3.0,
 	brilloParticulas: 1.0,
 	maxRostros: 5,
+	duracionRostro: 1.0, // Minutos
 	// Sonoras
 	volDrone: 0.7,
 	volMedia: 0.6,
@@ -21,7 +22,8 @@ let sDistConexion,
 	sTamanoBase,
 	sOpacidadLineas,
 	sBrilloParticulas,
-	sMaxRostros;
+	sMaxRostros,
+	sDuracionRostro;
 let sVolDrone, sVolMedia, sVolGrave;
 
 const entidades = [];
@@ -147,6 +149,13 @@ function setup() {
 		params.maxRostros,
 		1,
 	);
+	sDuracionRostro = crearControl(
+		"Duración Rostro",
+		0.1,
+		10.0,
+		params.duracionRostro,
+		0.1,
+	);
 
 	createDiv("<br><b>Sonido (Multipl.)</b>").parent(guiDiv);
 	sVolDrone = crearControl("Vol. Drone", 0, 3, params.volDrone, 0.1);
@@ -212,6 +221,7 @@ function draw() {
 	params.opacidadLineas = sOpacidadLineas.value();
 	params.brilloParticulas = sBrilloParticulas.value();
 	params.maxRostros = sMaxRostros.value();
+	params.duracionRostro = sDuracionRostro.value();
 
 	params.volDrone = sVolDrone.value();
 	params.volMedia = sVolMedia.value();
@@ -258,8 +268,8 @@ function draw() {
 
 	for (let i = rostros.length - 1; i >= 0; i--) {
 		let r = rostros[i];
-		// 10 minutos = 10 * 60 * 1000 ms
-		if (ahora - r.timestamp > 10 * 60 * 1000) {
+		// Verificar tiempo según el slider de duración (en minutos)
+		if (ahora - r.timestamp > params.duracionRostro * 60 * 1000) {
 			rostros.splice(i, 1);
 		} else {
 			r.dibujar();
@@ -743,6 +753,7 @@ function logSerialData(mac, rssi, ssid) {
 class Rostro {
 	constructor(img) {
 		this.img = img;
+		this.img.filter(GRAY); // Convertir a blanco y negro
 		this.x = random(100, width - 100);
 		this.y = random(100, height - 100);
 		this.timestamp = millis();
