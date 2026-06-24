@@ -3,11 +3,11 @@ const params = {
 	// Visuales
 	distConexion: 160,
 	probConexion: 0.015,
-	velGlobal: 1.0,
+	velGlobal: 2.5,
 	tamanoBase: 1.0,
 	opacidadLineas: 3.0,
 	brilloParticulas: 1.0,
-	maxRostros: 5,
+	maxRostros: 15,
 	duracionRostro: 1.0, // Minutos
 	// Sonoras
 	volDrone: 0.7,
