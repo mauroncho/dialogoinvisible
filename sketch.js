@@ -270,9 +270,14 @@ function draw() {
 	for (let i = rostros.length - 1; i >= 0; i--) {
 		let r = rostros[i];
 		// Verificar tiempo según el slider de duración (en minutos)
-		if (ahora - r.timestamp > params.duracionRostro * 60 * 1000) {
+		let duracion = params.duracionRostro * 60 * 1000;
+		let edad = ahora - r.timestamp;
+		if (edad > duracion) {
 			rostros.splice(i, 1);
 		} else {
+			r.opacidad = edad > duracion - FADE_DURACION 
+				? map(edad, duracion - FADE_DURACION, duracion, 120, 0)
+				: 120;
 			r.dibujar();
 		}
 	}
@@ -769,7 +774,7 @@ class Rostro {
 	dibujar() {
 		push();
 		imageMode(CENTER);
-		tint(255, 120); 
+		tint(255, this.opacidad !== undefined ? this.opacidad : 120); 
 		image(this.img, this.x, this.y, 100, 100);
 		pop();
 	}
@@ -789,9 +794,14 @@ class ConexionRostros {
 	dibujar() {
 		if (this.energia <= 0) return;
 		push();
-		let weight = map(this.energia, 0, 5, 1, 6);
+		let weight = map(this.energia, 0, 5, 1, 30);
 		strokeWeight(weight);
 		let alpha = map(min(this.energia, 1.0), 0, 1, 0, 200);
+		
+		let op1 = this.r1.opacidad !== undefined ? this.r1.opacidad : 120;
+		let op2 = this.r2.opacidad !== undefined ? this.r2.opacidad : 120;
+		alpha *= min(op1, op2) / 120;
+
 		stroke(255, alpha); 
 		
 		noFill();
