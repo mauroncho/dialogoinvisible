@@ -72,6 +72,9 @@ class Entidad {
 						}
 						if (!found) {
 							conexionesRostros.push(new ConexionRostros(this.ultimoRostro, closestRostro));
+							if (params.pulsosRostros) {
+								dispararPulso();
+							}
 						}
 					}
 					this.ultimoRostro = closestRostro;

@@ -13,6 +13,8 @@ const params = {
 	volDrone: 0.7,
 	volMedia: 0.6,
 	volGrave: 0.7,
+	pulsosEntidades: true,
+	pulsosRostros: false,
 };
 
 // Sliders de p5
@@ -25,6 +27,8 @@ let sDistConexion,
 	sMaxRostros,
 	sDuracionRostro;
 let sVolDrone, sVolMedia, sVolGrave;
+let cbPulsosEntidades;
+let cbPulsosRostros;
 
 const entidades = [];
 const conexiones = [];
@@ -150,6 +154,13 @@ function setup() {
 	sVolMedia = crearControl("Vol. Media", 0, 3, params.volMedia, 0.1);
 	sVolGrave = crearControl("Vol. Grave", 0, 3, params.volGrave, 0.1);
 
+	cbPulsosEntidades = createCheckbox(' Pulsos (Entidades)', params.pulsosEntidades);
+	cbPulsosEntidades.parent(guiDiv);
+	cbPulsosEntidades.style('margin-top', '5px');
+
+	cbPulsosRostros = createCheckbox(' Pulsos (Rostros)', params.pulsosRostros);
+	cbPulsosRostros.parent(guiDiv);
+
 	reverb = new p5.Reverb();
 
 	// Configuración del puerto serial
@@ -214,6 +225,8 @@ function draw() {
 	params.volDrone = sVolDrone.value();
 	params.volMedia = sVolMedia.value();
 	params.volGrave = sVolGrave.value();
+	params.pulsosEntidades = cbPulsosEntidades.checked();
+	params.pulsosRostros = cbPulsosRostros.checked();
 
 	background(0);
 
@@ -348,7 +361,10 @@ function draw() {
 
 	// ---------------- PULSO ----------------
 
-	energiaPulso += influencias.length * 0.002;
+	if (params.pulsosEntidades) {
+		energiaPulso += influencias.length * 0.002;
+	}
+	
 	energiaPulso *= 0.98;
 	energiaPulso = constrain(energiaPulso, 0, 1);
 
