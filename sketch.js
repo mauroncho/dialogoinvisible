@@ -35,6 +35,7 @@ let faceMesh;
 let rostros = [];
 let conexionesRostros = [];
 let lastCaptureTime = 0;
+let guiDiv;
 
 let reverb;
 let port; // Puerto serial
@@ -69,7 +70,7 @@ function setup() {
 	serialLogEl = document.getElementById("serial-log");
 
 	// Configurar GUI con p5
-	const guiDiv = createDiv();
+	guiDiv = createDiv();
 	guiDiv.position(10, 10);
 	guiDiv.style("background", "rgba(0,0,0,0.5)");
 	guiDiv.style("padding", "10px");
@@ -144,8 +145,8 @@ function setup() {
 	);
 	sMaxRostros = crearControl(
 		"Máx. Rostros",
-		0,
-		15,
+		5,
+		20,
 		params.maxRostros,
 		1,
 	);
@@ -547,6 +548,12 @@ function keyPressed() {
 			port.open(115200); // Abre el diálogo del navegador para elegir puerto
 		} else {
 			port.close(); // Cierra la conexión si ya estaba abierta
+		}
+	}
+	if (key === "h" || key === "H") {
+		debugMode = !debugMode;
+		if (guiDiv) {
+			guiDiv.style("display", debugMode ? "flex" : "none");
 		}
 	}
 }
